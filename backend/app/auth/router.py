@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+import httpx
 from app.db.database import get_db
 from app.users.models import User
 from app.config import settings
 from .github import exchange_code_for_token, get_github_user
-from .jwt import create_token, get_current_user_id
+from .jwt import create_token, get_current_user_id, decode_token_full
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -44,7 +46,7 @@ async def github_callback(code: str, state: str = "", db: AsyncSession = Depends
 
     await db.commit()
     await db.refresh(user)
-    token = create_token(str(user.id))
+    token = create_token(str(user.id), gh_token)
     return RedirectResponse(f"{redirect_to}?token={token}")
 
 @router.get("/me")
@@ -55,3 +57,23 @@ async def get_me(user_id: str = Depends(get_current_user_id), db: AsyncSession =
     return {"id": str(user.id), "github_username": user.github_username,
             "email": user.email, "avatar_url": user.avatar_url,
             "created_at": user.created_at}
+
+@router.post("/logout")
+async def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+):
+    """Revoke the GitHub OAuth token so GitHub will show the auth screen next login."""
+    payload = decode_token_full(credentials.credentials)
+    gh_token = payload.get("gh", "")
+    if gh_token:
+        try:
+            async with httpx.AsyncClient() as client:
+                await client.delete(
+                    f"https://api.github.com/applications/{settings.GITHUB_CLIENT_ID}/grant",
+                    auth=(settings.GITHUB_CLIENT_ID, settings.GITHUB_CLIENT_SECRET),
+                    json={"access_token": gh_token},
+                    headers={"Accept": "application/vnd.github+json"},
+                )
+        except Exception:
+            pass  # best-effort revocation
+    return {"ok": True}

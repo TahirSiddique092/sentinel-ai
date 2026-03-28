@@ -19,10 +19,9 @@ app.add_middleware(CORSMiddleware,
 
 @app.on_event("startup")
 async def startup():
-    # create tables on startup (use alembic for prod)
-    async with engine.begin() as conn:
-        await conn.run_sync(UserBase.metadata.create_all)
-        await conn.run_sync(ScanBase.metadata.create_all)
+    # Tables are managed by Neon/alembic — no DB call needed at startup.
+    # NullPool provides fresh connections per request, so no warm-up is required.
+    print("✓ SentinelAI API starting up")
 
 app.include_router(auth_router)
 app.include_router(users_router)

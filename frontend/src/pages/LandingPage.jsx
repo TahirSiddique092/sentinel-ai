@@ -114,9 +114,9 @@ export default function LandingPage() {
     })
   }
 
-  // GitHub OAuth — redirects to your backend, which handles the full flow
+  // GitHub OAuth — redirect to /login which handles the GitHub OAuth flow
   const handleLogin = () => {
-    window.location.href = `${API_URL}/auth/github`
+    navigate('/login')
   }
 
   return (

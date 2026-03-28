@@ -3,7 +3,7 @@ from pathlib import Path
 
 CONFIG_DIR = Path.home() / ".sentinelai"
 CONFIG_FILE = CONFIG_DIR / "config.json"
-DEFAULT_API_URL = "https://sentinelai-api.onrender.com"
+DEFAULT_API_URL = "http://localhost:8000"
 
 def load_config() -> dict:
     if not CONFIG_FILE.exists():

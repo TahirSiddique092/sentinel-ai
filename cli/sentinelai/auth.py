@@ -22,9 +22,11 @@ class CallbackHandler(BaseHTTPRequestHandler):
         pass  # suppress server logs
 
 @click.command()
-def login():
+@click.option("--api-url", default=None, help="Override API URL (e.g. http://localhost:8000)")
+def login(api_url):
     """Authenticate with SentinelAI via GitHub."""
-    api_url = get_api_url()
+    api_url = api_url or get_api_url()
+    save_config({"api_url": api_url, "token": None})
 
     server = HTTPServer(("localhost", 9876), CallbackHandler)
     server._done = False

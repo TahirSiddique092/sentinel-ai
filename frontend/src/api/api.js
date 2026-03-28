@@ -25,6 +25,7 @@ api.interceptors.response.use(
 
 export const authAPI = {
   me: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'),
 }
 
 export const scansAPI = {

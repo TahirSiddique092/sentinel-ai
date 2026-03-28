@@ -29,9 +29,10 @@ export default function Dashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const logout = () => {
+  const logout = async () => {
+    try { await authAPI.logout() } catch (_) {}
     localStorage.removeItem('sentinel_token')
-    navigate('/')
+    window.location.href = '/login?from=logout'
   }
 
   const startScan = async () => {
@@ -89,6 +90,8 @@ export default function Dashboard() {
         .btn-scan:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 32px rgba(138,43,226,0.6) !important; }
         .btn-scan:disabled { opacity: 0.5; cursor: not-allowed; }
         .logout-btn:hover { color: #f0eaff !important; }
+        .nav-link { color: rgba(240,234,255,0.5); text-decoration: none; font-size: 13px; transition: color 0.2s; }
+        .nav-link:hover { color: #c084fc; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #080810; }
         ::-webkit-scrollbar-thumb { background: #3b0764; border-radius: 6px; }
@@ -106,10 +109,11 @@ export default function Dashboard() {
           <span style={{ marginLeft: 8, padding: '2px 10px', background: 'rgba(138,43,226,0.15)', border: '1px solid rgba(138,43,226,0.3)', borderRadius: 4, fontSize: 11, color: '#c084fc', fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.06em' }}>DASHBOARD</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to="/profile" className="nav-link">Profile</Link>
           {user && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <img src={user.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid rgba(138,43,226,0.4)' }} />
-              <span style={{ fontSize: 13, color: 'rgba(240,234,255,0.7)' }}>{user.github_username}</span>
+              <img src={user.avatar_url} alt="" style={{ width: 28, height: 28, borderRadius: '50%', border: '1px solid rgba(138,43,226,0.4)', cursor: 'pointer' }} onClick={() => navigate('/profile')} />
+              <span style={{ fontSize: 13, color: 'rgba(240,234,255,0.7)', cursor: 'pointer' }} onClick={() => navigate('/profile')}>{user.github_username}</span>
             </div>
           )}
           <button className="logout-btn" onClick={logout} style={{ background: 'none', border: 'none', color: 'rgba(240,234,255,0.4)', fontSize: 12, cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace', transition: 'color 0.2s' }}>logout →</button>

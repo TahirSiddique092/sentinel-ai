@@ -6,10 +6,16 @@ from app.config import settings
 
 bearer_scheme = HTTPBearer()
 
-def create_token(user_id: str) -> str:
+def create_token(user_id: str, github_token: str = "") -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.JWT_EXPIRE_DAYS)
-    payload = {"sub": user_id, "exp": expire}
+    payload = {"sub": user_id, "exp": expire, "gh": github_token}
     return jwt.encode(payload, settings.JWT_SECRET, algorithm="HS256")
+
+def decode_token_full(token: str) -> dict:
+    try:
+        return jwt.decode(token, settings.JWT_SECRET, algorithms=["HS256"])
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
 def decode_token(token: str) -> str:
     try:

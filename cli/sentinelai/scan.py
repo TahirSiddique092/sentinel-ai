@@ -66,6 +66,7 @@ def scan(target, hf_token, output_dir):
         f"{api_url}/scans",
         json={"target": target, "target_type": target_type, "hf_token": hf_token},
         headers=headers,
+        timeout=30,
     )
     if resp.status_code != 202:
         console.print(f"[red]✗ Failed to start scan: {resp.text}[/red]")
@@ -75,13 +76,16 @@ def scan(target, hf_token, output_dir):
 
     with Live(console=console, refresh_per_second=2) as live:
         while True:
-            r = httpx.get(f"{api_url}/scans/{scan_id}", headers=headers)
-            data = r.json()
-            status = data["status"]
-            live.update(Panel(make_status_table(data), title=f"[cyan]Scanning {target}[/cyan]"))
-            if status in ("complete", "failed"):
-                break
-            time.sleep(2)
+            try:
+                r = httpx.get(f"{api_url}/scans/{scan_id}", headers=headers, timeout=30)
+                data = r.json()
+                status = data["status"]
+                live.update(Panel(make_status_table(data), title=f"[cyan]Scanning {target}[/cyan]"))
+                if status in ("complete", "failed"):
+                    break
+            except (httpx.ReadTimeout, httpx.ConnectError):
+                pass  # server busy during download — keep waiting
+            time.sleep(3)
 
     if data["status"] == "failed":
         console.print(f"[red]✗ Scan failed: {data.get('error_message', 'Unknown error')}[/red]")

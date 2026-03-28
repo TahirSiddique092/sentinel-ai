@@ -1,6 +1,6 @@
 import tempfile, os
 from huggingface_hub import snapshot_download
-from modelscan.scanner import ModelScan
+from modelscan.modelscan import ModelScan
 from .base import BaseScanner, FindingData
 
 class SerializationScanner(BaseScanner):
@@ -16,10 +16,10 @@ class SerializationScanner(BaseScanner):
                     path = self.target
 
                 scanner = ModelScan()
-                results = scanner.scan(path)
+                scanner.scan(path)
 
-                if results.issues:
-                    for issue in results.issues:
+                if scanner.issues:
+                    for issue in scanner.issues:
                         findings.append(FindingData(
                             module="serialization", severity="CRITICAL",
                             title=f"Malicious code in {issue.source.name}",
