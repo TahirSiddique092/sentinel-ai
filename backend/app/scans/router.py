@@ -54,12 +54,20 @@ async def get_scan(scan_id: str, user_id: str = Depends(get_current_user_id),
 
 @router.get("/{scan_id}/findings")
 async def get_findings(scan_id: str, user_id: str = Depends(get_current_user_id),
-                         db: AsyncSession = Depends(get_db)):
+                       db: AsyncSession = Depends(get_db)):
+    # verify ownership
+    scan_result = await db.execute(select(Scan).where(Scan.id == scan_id, Scan.user_id == user_id))
+    if not scan_result.scalar_one_or_none():
+        raise HTTPException(404)
     result = await db.execute(
-        select(Finding).where(Finding.scan_id == scan_id).order_by(
-            Finding.severity.desc()))  # CRITICAL first
-    return ["id", "module", "severity", "title", "description",
-            "owasp_tag", "remediation", "created_at"]  # Member 3: serialize properly
+        select(Finding).where(Finding.scan_id == scan_id)
+        .order_by(Finding.severity)
+    )
+    findings = result.scalars().all()
+    return [{"id": str(f.id), "module": f.module, "severity": f.severity,
+             "title": f.title, "description": f.description,
+             "owasp_tag": f.owasp_tag, "remediation": f.remediation,
+             "created_at": f.created_at} for f in findings]
 
 @router.get("/{scan_id}/report")
 async def get_report(scan_id: str, format: str = "json",
