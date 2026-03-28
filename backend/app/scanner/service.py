@@ -1,7 +1,6 @@
 import asyncio
 from datetime import datetime, timezone
 from sqlalchemy import select
-from sqlalchemy.exc import OperationalError
 from app.db.database import AsyncSessionLocal
 from app.scans.models import Scan, Finding
 from .serialization import SerializationScanner
@@ -12,112 +11,91 @@ from .bias import BiasChecker
 from .scorer import calculate_score
 
 
-async def _db_with_retry(fn, retries=4, delay=1.5):
-    """Execute an async DB operation with exponential backoff retries.
-    Handles transient ConnectionResetError / OperationalError from Neon serverless."""
-    last_exc = None
-    for attempt in range(retries):
-        try:
-            async with AsyncSessionLocal() as db:
-                return await fn(db)
-        except (OperationalError, ConnectionResetError, OSError) as e:
-            last_exc = e
-            wait = delay * (2 ** attempt)
-            print(f"[DB] Transient error (attempt {attempt+1}/{retries}), retrying in {wait:.1f}s: {e}")
-            await asyncio.sleep(wait)
-    raise last_exc
-
-
-async def _mark_running(scan_id: str, module_key: str):
-    async def fn(db):
-        result = await db.execute(select(Scan).where(Scan.id == scan_id))
-        scan = result.scalar_one()
-        scan.modules_status = {**scan.modules_status, module_key: "running"}
-        await db.commit()
-    await _db_with_retry(fn)
-
-
-async def _save_findings(scan_id: str, module_key: str, findings):
-    async def fn(db):
-        for f in findings:
-            if f.severity == "INFO":
-                continue
-            db.add(Finding(
-                scan_id=scan_id, module=f.module, severity=f.severity,
-                title=f.title, description=f.description,
-                owasp_tag=f.owasp_tag, remediation=f.remediation,
-                raw_data=f.raw_data
-            ))
-        result = await db.execute(select(Scan).where(Scan.id == scan_id))
-        scan = result.scalar_one()
-        scan.modules_status = {**scan.modules_status, module_key: "complete"}
-        await db.commit()
-    await _db_with_retry(fn)
-
-
-async def run_module(scanner, module_key: str, scan_id: str):
-    """Run one scanner module and write its findings to DB."""
-    await _mark_running(scan_id, module_key)
-
+async def run_scanner_safe(scanner, module_key: str) -> tuple[str, list]:
+    """Run one scanner. Returns (module_key, findings). Never raises."""
     try:
         findings = await scanner.run()
+        return module_key, findings
     except Exception as e:
-        findings = []
         print(f"Module {module_key} failed: {e}")
-
-    await _save_findings(scan_id, module_key, findings)
-    return findings
+        return module_key, []
 
 
-async def run_scan(scan_id: str, target: str, target_type: str, hf_token: str = None):
-    """Main scan orchestrator — called as a FastAPI background task."""
-    async def mark_running(db):
-        result = await db.execute(select(Scan).where(Scan.id == scan_id))
-        scan = result.scalar_one()
-        scan.status = "running"
-        await db.commit()
-    await _db_with_retry(mark_running)
+async def write_results(scan_id: str, all_findings: list, modules_final: dict,
+                        risk_score: int, risk_label: str):
+    """Single DB write for everything — retried up to 4 times."""
+    for attempt in range(4):
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(select(Scan).where(Scan.id == scan_id))
+                scan = result.scalar_one()
+                scan.status = "complete"
+                scan.risk_score = risk_score
+                scan.risk_label = risk_label
+                scan.modules_status = modules_final
+                scan.completed_at = datetime.now(timezone.utc)
+                for f in all_findings:
+                    if f.severity != "INFO":
+                        db.add(Finding(
+                            scan_id=scan_id, module=f.module, severity=f.severity,
+                            title=f.title, description=f.description,
+                            owasp_tag=f.owasp_tag, remediation=f.remediation,
+                            raw_data=f.raw_data
+                        ))
+                await db.commit()
+                print(f"[DB] Scan {scan_id} written successfully")
+                return
+        except Exception as e:
+            print(f"[DB] Write attempt {attempt+1}/4 failed: {e}")
+            if attempt < 3:
+                await asyncio.sleep(2 ** attempt)  # 1s, 2s, 4s backoff
 
-    kwargs = {"target": target, "target_type": target_type, "hf_token": hf_token}
-
-    # Run cheap / fast modules in parallel, but serialization (large download)
-    # runs alone first to avoid hitting Neon's connection limit simultaneously.
+    # Last resort — mark failed
     try:
-        serialization_findings = await run_module(
-            SerializationScanner(**kwargs), "serialization", scan_id
-        )
-
-        # Now run remaining 4 modules in parallel (no large downloads)
-        remaining = await asyncio.gather(
-            run_module(CVEScanner(**kwargs), "cve", scan_id),
-            run_module(ConfigAuditor(**kwargs), "config", scan_id),
-            run_module(BehavioralProbe(**kwargs), "behavioral", scan_id),
-            run_module(BiasChecker(**kwargs), "bias", scan_id),
-            return_exceptions=True,
-        )
-
-        all_findings = list(serialization_findings)
-        for res in remaining:
-            if isinstance(res, list):
-                all_findings.extend(res)
-
-        risk_score, risk_label = calculate_score(all_findings)
-
-        async def finalize(db):
-            result = await db.execute(select(Scan).where(Scan.id == scan_id))
-            scan = result.scalar_one()
-            scan.status = "complete"
-            scan.risk_score = risk_score
-            scan.risk_label = risk_label
-            scan.completed_at = datetime.now(timezone.utc)
-            await db.commit()
-        await _db_with_retry(finalize)
-
-    except Exception as e:
-        async def mark_failed(db):
+        async with AsyncSessionLocal() as db:
             result = await db.execute(select(Scan).where(Scan.id == scan_id))
             scan = result.scalar_one()
             scan.status = "failed"
-            scan.error_message = str(e)
+            scan.error_message = "DB write failed after 4 retries"
             await db.commit()
-        await _db_with_retry(mark_failed)
+    except Exception as e:
+        print(f"[DB] Could not even mark scan as failed: {e}")
+
+
+async def run_scan(scan_id: str, target: str, target_type: str, hf_token: str = None):
+    # Mark scan as running
+    try:
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Scan).where(Scan.id == scan_id))
+            scan = result.scalar_one()
+            scan.status = "running"
+            scan.modules_status = {
+                "serialization": "running", "cve": "running",
+                "config": "running", "behavioral": "running", "bias": "running"
+            }
+            await db.commit()
+    except Exception as e:
+        print(f"[DB] Could not mark scan as running: {e}")
+
+    kwargs = {"target": target, "target_type": target_type, "hf_token": hf_token}
+
+    # Run all 5 modules in parallel — all results collected in memory
+    results = await asyncio.gather(
+        run_scanner_safe(SerializationScanner(**kwargs), "serialization"),
+        run_scanner_safe(CVEScanner(**kwargs), "cve"),
+        run_scanner_safe(ConfigAuditor(**kwargs), "config"),
+        run_scanner_safe(BehavioralProbe(**kwargs), "behavioral"),
+        run_scanner_safe(BiasChecker(**kwargs), "bias"),
+    )
+
+    # Flatten all findings
+    modules_final = {}
+    all_findings = []
+    for module_key, findings in results:
+        modules_final[module_key] = "complete"
+        all_findings.extend(findings)
+
+    risk_score, risk_label = calculate_score(all_findings)
+
+    # One single DB write for everything
+    await write_results(scan_id, all_findings, modules_final, risk_score, risk_label)

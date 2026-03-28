@@ -18,8 +18,9 @@ class SerializationScanner(BaseScanner):
                 scanner = ModelScan()
                 scanner.scan(path)
 
-                if scanner.issues:
-                    for issue in scanner.issues:
+                all_issues = scanner.issues.all_issues
+                if all_issues:
+                    for issue in all_issues:
                         findings.append(FindingData(
                             module="serialization", severity="CRITICAL",
                             title=f"Malicious code in {issue.source.name}",
