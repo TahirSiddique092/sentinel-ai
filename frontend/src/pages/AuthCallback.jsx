@@ -1,0 +1,17 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+export default function AuthCallback() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get('token')
+    if (token) {
+      localStorage.setItem('sentinel_token', token)
+      navigate('/dashboard')
+    } else {
+      navigate('/')
+    }
+  }, [])
+  return <div>Logging in...</div>
+}
