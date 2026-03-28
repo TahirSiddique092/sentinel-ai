@@ -83,3 +83,15 @@ async def get_report(scan_id: str, format: str = "json",
         return HTMLResponse(generate_html_report(scan, findings),
                              headers={"Content-Disposition": f'attachment; filename="scan-{scan_id}.html"'})
     return generate_json_report(scan, findings)
+
+@router.get("")
+async def list_scans(user_id: str = Depends(get_current_user_id),
+                     db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Scan).where(Scan.user_id == user_id)
+        .order_by(Scan.created_at.desc()).limit(50)
+    )
+    scans = result.scalars().all()
+    return [{"scan_id": str(s.id), "target": s.target, "status": s.status,
+             "risk_score": s.risk_score, "risk_label": s.risk_label,
+             "created_at": s.created_at, "completed_at": s.completed_at} for s in scans]
