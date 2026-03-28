@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
+import LandingPage from './pages/LandingPage'
 import Dashboard from './pages/Dashboard'
 import ScanDetail from './pages/ScanDetail'
 import Profile from './pages/Profile'
@@ -14,7 +14,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/scans/:id" element={<PrivateRoute><ScanDetail /></PrivateRoute>} />
