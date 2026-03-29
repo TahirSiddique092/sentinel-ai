@@ -9,7 +9,8 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     HF_TOKEN: str = ""
     GEMINI_API_KEY: str = ""
-    ALLOWED_ORIGINS: str = ""  # comma-separated production origins
+    ALLOWED_ORIGINS: str = "" 
+    REDIS_URL: str = "redis://localhost:6379" 
 
     model_config = SettingsConfigDict(env_file=".env")
 

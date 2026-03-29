@@ -11,7 +11,12 @@ from slowapi.util import get_remote_address
 from app.db.database import get_db
 from app.auth.jwt import get_current_user_id
 from .models import Scan, Finding
-from app.scanner.service import run_scan
+import redis
+from rq import Queue
+from app.config import settings
+
+_redis_conn = redis.from_url(settings.REDIS_URL)
+_scan_queue = Queue("sentinelai-scans", connection=_redis_conn)
 
 logger = logging.getLogger("sentinelai")
 
@@ -30,29 +35,32 @@ class ScanCreate(BaseModel):
 async def create_scan(
     request: Request,
     body: ScanCreate,
-    background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
+    # ↑ BackgroundTasks removed
 ):
+    from app.scanner.service import run_scan   # import here to avoid circular at module level
+
     scan = Scan(
         user_id=user_id,
         target=body.target,
         target_type=body.target_type,
         status="pending",
         modules_status={
-            "serialization": "pending",
-            "cve": "pending",
-            "config": "pending",
-            "behavioral": "pending",
-            "bias": "pending",
+            "serialization": "pending", "cve": "pending",
+            "config": "pending", "behavioral": "pending", "bias": "pending",
         },
     )
     db.add(scan)
     await db.commit()
     await db.refresh(scan)
-    background_tasks.add_task(
-        run_scan, str(scan.id), body.target, body.target_type, body.hf_token
+
+    _scan_queue.enqueue(     
+        run_scan,
+        str(scan.id), body.target, body.target_type, body.hf_token,
+        job_timeout=600         
     )
+
     return {"scan_id": str(scan.id), "status": "pending", "created_at": scan.created_at}
 
 
