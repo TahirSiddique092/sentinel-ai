@@ -5,13 +5,39 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sentinelai"
 version = "0.1.0"
-description = "AI model security scanner CLI"
+description = "AI model security scanner — scan any HuggingFace model for vulnerabilities, CVEs, misconfigurations, prompt injection, and bias."
+readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.10"
+authors = [
+    {name = "SentinelAI Team"},
+]
+keywords = ["ai", "security", "scanner", "huggingface", "llm", "vulnerability", "prompt-injection", "bias"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
     "click>=8.1",
     "rich>=13.0",
     "httpx>=0.27",
 ]
+
+[project.urls]
+Homepage = "https://github.com/TahirSiddique092/sentinel-ai"
+Repository = "https://github.com/TahirSiddique092/sentinel-ai"
+Documentation = "https://github.com/TahirSiddique092/sentinel-ai#readme"
+"Bug Tracker" = "https://github.com/TahirSiddique092/sentinel-ai/issues"
 
 [project.scripts]
 sentinelai = "sentinelai.main:cli"

@@ -3,7 +3,7 @@ from pathlib import Path
 
 CONFIG_DIR = Path.home() / ".sentinelai"
 CONFIG_FILE = CONFIG_DIR / "config.json"
-DEFAULT_API_URL = "http://localhost:8000"
+DEFAULT_API_URL = "https://your-render-backend.onrender.com"  # TODO: replace with actual Render URL
 
 def load_config() -> dict:
     if not CONFIG_FILE.exists():
@@ -21,3 +21,9 @@ def get_token() -> str | None:
 
 def get_api_url() -> str:
     return load_config().get("api_url", DEFAULT_API_URL)
+
+def clear_token():
+    """Remove the stored token (used by logout)."""
+    config = load_config()
+    config["token"] = None
+    save_config(config)
