@@ -25,8 +25,9 @@ jobs:
         
 
       - name: Build binary wheel and source tarball
-        run: python -m build
-        working-directory: ./cli
+        run: python -m build cli/
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: cli/dist/
