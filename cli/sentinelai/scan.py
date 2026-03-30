@@ -113,4 +113,4 @@ def scan(target, hf_token, output_dir):
         console.print(f"  [dim]→ Saved: {path}[/dim]")
 
     console.print(f"\n  [dim]Scan ID: {scan_id}[/dim]")
-    console.print(f"  [dim]Dashboard: https://sentinelai.vercel.app/scans/{scan_id}[/dim]\n")
+    console.print(f"  [dim]Dashboard: https://sentinel-ai-azure.vercel.app/scans/{scan_id}[/dim]\n")

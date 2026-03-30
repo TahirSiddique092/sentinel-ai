@@ -5,6 +5,8 @@ import Dashboard from './pages/Dashboard'
 import ScanDetail from './pages/ScanDetail'
 import Profile from './pages/Profile'
 import AuthCallback from './pages/AuthCallback'
+import Developers from './pages/Developers'
+import ApiDocs from './pages/ApiDocs'
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem('sentinel_token')
@@ -18,6 +20,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/developers" element={<Developers />} />
+        <Route path="/api-docs" element={<ApiDocs />} />
         <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
         <Route path="/scans/:id" element={<PrivateRoute><ScanDetail /></PrivateRoute>} />
         <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />

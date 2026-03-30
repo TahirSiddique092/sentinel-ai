@@ -334,7 +334,7 @@ export default function LandingPage() {
       <section id="hero">
         <div className="hero-badge">
           <span className="badge-dot" />
-          Built at Hackathon 2026 · AI Security
+          AI Security · Open Source · 2026
         </div>
         <h1 className="hero-title">
           The VirusTotal
@@ -590,17 +590,14 @@ export default function LandingPage() {
             SentinelAI
           </a>
           <ul className="footer-links">
-            {/* API docs — external */}
-            <li><a href={`${API_URL}/docs`} target="_blank" rel="noopener noreferrer">API Docs</a></li>
-            {/* PyPI — external */}
+            <li><a href="/api-docs">API Docs</a></li>
             <li><a href="https://pypi.org/project/sentinelai" target="_blank" rel="noopener noreferrer">PyPI</a></li>
-            {/* GitHub — external */}
             <li><a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="/developers">Developers</a></li>
           </ul>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <span className="hackathon-badge">🏆 Hackathon 2026</span>
-          <span className="footer-right">MIT License · Built with ❤️ for Responsible AI</span>
+          <span className="footer-right" style={{ color: 'rgba(240,234,255,0.3)', fontSize: '0.82rem' }}>MIT License · SentinelAI 2026</span>
         </div>
       </footer>
     </>

@@ -28,4 +28,4 @@ def logout():
         pass  # Server may be unreachable — still clear local token
 
     clear_token()
-    console.print("[green]✓ Logged out successfully.[/green] Token removed from ~/.sentinelai/config.json")
+    console.print("[green]✓ Logged out successfully.[/green]")

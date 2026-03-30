@@ -3,7 +3,7 @@ from pathlib import Path
 
 CONFIG_DIR = Path.home() / ".sentinelai"
 CONFIG_FILE = CONFIG_DIR / "config.json"
-DEFAULT_API_URL = "https://your-render-backend.onrender.com"  # TODO: replace with actual Render URL
+DEFAULT_API_URL = "https://sentinel-ai-vevc.onrender.com"  
 
 def load_config() -> dict:
     if not CONFIG_FILE.exists():

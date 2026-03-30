@@ -61,7 +61,7 @@ After scanning, you get:
 
 ## Links
 
-- 🌐 [Web Dashboard](https://sentinelai.vercel.app)
+- 🌐 [Web Dashboard](https://sentinelai.azure.vercel.app)
 - 📖 [GitHub Repository](https://github.com/TahirSiddique092/sentinel-ai)
 - 🐛 [Report Issues](https://github.com/TahirSiddique092/sentinel-ai/issues)
 
