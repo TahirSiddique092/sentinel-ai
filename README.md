@@ -28,7 +28,7 @@ One command. Five security checks. A single risk score.
 AI models are deployed everywhere — in hospitals, banks, hiring systems — but nobody runs a security check before they go live. SentinelAI is an open-source CLI tool and web dashboard that scans any HuggingFace model (or local model folder) for security vulnerabilities, dependency CVEs, misconfigurations, prompt injection weaknesses, and bias signals — then gives you a single **0–100 risk score** and a full report.
 
 ```bash
-pip install sentinelai
+pip install sentinel-ai-scanner
 sentinelai login
 sentinelai scan meta-llama/Llama-3-8B
 ```
@@ -48,7 +48,7 @@ sentinelai scan meta-llama/Llama-3-8B
 
   → Saved: llama3-report.html
   → Saved: llama3-report.json
-  → Dashboard: https://sentinelai.vercel.app/scans/a3f9d2...
+  → Dashboard: https://sentinel-ai-azure.vercel.app/scans/a3f9d2...
 ```
 
 ---
@@ -74,7 +74,7 @@ sentinelai scan meta-llama/Llama-3-8B
 |---|---|
 | 🔍 **5 Scan Modules** | Serialization, CVE, Config, Behavioral Probe, Bias Check |
 | 📊 **Risk Scoring** | Weighted 0–100 score mapped to OWASP LLM Top 10 |
-| 🖥️ **CLI** | `pip install sentinelai` — works on any machine |
+| 🖥️ **CLI** | `pip install sentinel-ai-scanner` — works on any machine |
 | 🌐 **Web Dashboard** | Scan history, findings viewer, report downloads |
 | 📄 **Reports** | HTML (human-readable) + JSON (CI/CD ready) |
 | 🔐 **GitHub Auth** | One login — CLI and dashboard share the same session |
@@ -607,7 +607,7 @@ python -m build
 twine upload dist/*
 
 # Users install with:
-pip install sentinelai
+pip install sentinel-ai-scanner
 ```
 
 ---
@@ -676,6 +676,6 @@ MIT — see [LICENSE](LICENSE) for details.
 
 Built at Hackathon 2026 · AI Security · Responsible AI · Model Governance
 
-**[Dashboard](https://sentinelai.vercel.app)** · **[API Docs](https://sentinelai-api.onrender.com/docs)** · **[pip install sentinelai](https://pypi.org/project/sentinelai)**
+**[Dashboard](https://sentinel-ai-azure.vercel.app)** · **[API Docs](https://sentinel-ai-azure.vercel.app/api-docs)** · **[pip install sentinel-ai-scanner](https://pypi.org/project/sentinel-ai-scanner)**
 
 </div>

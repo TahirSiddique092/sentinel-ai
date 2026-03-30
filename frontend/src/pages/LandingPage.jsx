@@ -107,7 +107,7 @@ export default function LandingPage() {
   }, [])
 
   const copyCode = () => {
-    const code = `pip install sentinelai\nsentinelai login\nsentinelai scan meta-llama/Llama-3-8B`
+    const code = `pip install sentinel-ai-scanner\nsentinelai login\nsentinelai scan meta-llama/Llama-3-8B`
     navigator.clipboard.writeText(code).then(() => {
       const btn = document.querySelector('.code-copy')
       if (btn) { btn.textContent = '✓ Copied!'; btn.style.color = 'var(--safe)'; setTimeout(() => { btn.textContent = '⎘ Copy'; btn.style.color = '' }, 2000) }
@@ -347,7 +347,7 @@ export default function LandingPage() {
           {/* Scrolls to #install section on same page */}
           <a href="#install" className="btn-hero">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-            pip install sentinelai
+            pip install sentinel-ai-scanner
           </a>
           {/* Dashboard — triggers GitHub OAuth */}
           <button className="btn-hero-ghost" onClick={handleLogin}>
@@ -377,7 +377,7 @@ export default function LandingPage() {
               <div className="t-muted">  3 critical findings · 2 medium · 1 low</div>
               <div style={{ height: '0.5rem' }} />
               <div className="t-muted">  → Saved: <span style={{ color: 'var(--purple-300)' }}>llama3-report.html</span></div>
-              <div className="t-muted">  → Dashboard: <span style={{ color: 'var(--purple-300)' }}>sentinelai.vercel.app/scans/a3f9d2...</span></div>
+              <div className="t-muted">  → Dashboard: <span style={{ color: 'var(--purple-300)' }}>sentinel-ai-azure.vercel.app/scans/a3f9d2...</span></div>
             </div>
           </div>
         </div>
@@ -539,7 +539,7 @@ export default function LandingPage() {
               <button className="code-copy" onClick={copyCode}>⎘ Copy</button>
             </div>
             <div className="code-body">
-              <div><span className="c-dollar">$ </span><span className="c-cmd">pip install </span><span className="c-arg">sentinelai</span></div>
+              <div><span className="c-dollar">$ </span><span className="c-cmd">pip install </span><span className="c-arg">sentinel-ai-scanner</span></div>
               <div><span className="c-dollar">$ </span><span className="c-cmd">sentinelai </span><span className="c-arg">login</span></div>
               <div><span className="c-dollar">$ </span><span className="c-cmd">sentinelai </span><span className="c-arg">scan </span><span style={{ color: 'var(--info)' }}>meta-llama/Llama-3-8B</span></div>
               <div style={{ marginTop: '0.5rem' }} className="c-out"># ↓ Scan runs in parallel across all 5 modules</div>
@@ -591,7 +591,7 @@ export default function LandingPage() {
           </a>
           <ul className="footer-links">
             <li><a href="/api-docs">API Docs</a></li>
-            <li><a href="https://pypi.org/project/sentinelai" target="_blank" rel="noopener noreferrer">PyPI</a></li>
+            <li><a href="https://pypi.org/project/sentinel-ai-scanner" target="_blank" rel="noopener noreferrer">PyPI</a></li>
             <li><a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">GitHub</a></li>
             <li><a href="/developers">Developers</a></li>
           </ul>

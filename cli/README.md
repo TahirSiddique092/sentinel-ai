@@ -14,7 +14,7 @@
 ## Install
 
 ```bash
-pip install sentinelai
+pip install sentinel-ai-scanner
 ```
 
 ## Quick Start
@@ -61,7 +61,7 @@ After scanning, you get:
 
 ## Links
 
-- 🌐 [Web Dashboard](https://sentinelai.azure.vercel.app)
+- 🌐 [Web Dashboard](https://sentinel-ai-azure.vercel.app)
 - 📖 [GitHub Repository](https://github.com/TahirSiddique092/sentinel-ai)
 - 🐛 [Report Issues](https://github.com/TahirSiddique092/sentinel-ai/issues)
 
