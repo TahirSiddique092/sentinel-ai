@@ -12,13 +12,21 @@ from .behavioral import BehavioralProbe
 from .bias import BiasChecker
 from .scorer import calculate_score
 
-# Sync engine for the worker process (RQ is sync)
-_sync_url = settings.DATABASE_URL.replace(
-    "postgresql+asyncpg://", "postgresql://"
-).replace(
-    "postgresql+asyncpg+", "postgresql+"
+_sync_url = settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+
+if "ssl=" in _sync_url:
+    _sync_url = _sync_url.replace("ssl=", "sslmode=")
+
+connect_args = {}
+if "sslmode=" in _sync_url:
+    connect_args["sslmode"] = "require"
+
+sync_engine = create_engine(
+    _sync_url, 
+    pool_pre_ping=True, 
+    pool_recycle=180,
+    connect_args=connect_args
 )
-sync_engine = create_engine(_sync_url, pool_pre_ping=True, pool_recycle=180)
 
 
 def _get_sync_session() -> Session:
@@ -40,14 +48,18 @@ def run_scan(scan_id: str, target: str, target_type: str, hf_token: str = None):
     """Main scan orchestrator — called by RQ worker (sync)."""
 
     # Mark as running
-    with _get_sync_session() as db:
-        scan = db.execute(select(Scan).where(Scan.id == scan_id)).scalar_one()
-        scan.status = "running"
-        scan.modules_status = {
-            "serialization": "running", "cve": "running",
-            "config": "running", "behavioral": "running", "bias": "running"
-        }
-        db.commit()
+    try:
+        with _get_sync_session() as db:
+            scan = db.execute(select(Scan).where(Scan.id == scan_id)).scalar_one()
+            scan.status = "running"
+            scan.modules_status = {
+                "serialization": "running", "cve": "running",
+                "config": "running", "behavioral": "running", "bias": "running"
+            }
+            db.commit()
+    except Exception as e:
+        print(f"[DB] Could not mark scan as running: {e}")
+        return
 
     kwargs = {"target": target, "target_type": target_type, "hf_token": hf_token}
     scanner_classes = [
@@ -78,6 +90,10 @@ def run_scan(scan_id: str, target: str, target_type: str, hf_token: str = None):
                 scan.risk_label = risk_label
                 scan.modules_status = modules_final
                 scan.completed_at = datetime.now(timezone.utc)
+                
+                # Clear existing findings if any (for retries)
+                # db.execute(delete(Finding).where(Finding.scan_id == scan_id))
+                
                 for f in all_findings:
                     if f.severity != "INFO":
                         db.add(Finding(
@@ -94,7 +110,6 @@ def run_scan(scan_id: str, target: str, target_type: str, hf_token: str = None):
             if attempt < 3:
                 import time; time.sleep(2 ** attempt)
 
-    # Mark failed
     try:
         with _get_sync_session() as db:
             scan = db.execute(select(Scan).where(Scan.id == scan_id)).scalar_one()
