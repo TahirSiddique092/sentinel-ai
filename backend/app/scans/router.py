@@ -35,11 +35,41 @@ class ScanCreate(BaseModel):
 async def create_scan(
     request: Request,
     body: ScanCreate,
+    background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
-    # ↑ BackgroundTasks removed
 ):
-    from app.scanner.service import run_scan   # import here to avoid circular at module level
+    # ── Validate model exists before creating any DB record ──────────────
+    if body.target_type == "huggingface":
+        import httpx as _httpx
+        hf_headers = {}
+        if body.hf_token:
+            hf_headers["Authorization"] = f"Bearer {body.hf_token}"
+        try:
+            async with _httpx.AsyncClient(timeout=10) as client:
+                r = await client.get(
+                    f"https://huggingface.co/api/models/{body.target}",
+                    headers=hf_headers
+                )
+            if r.status_code == 401 or r.status_code == 403:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Model '{body.target}' is private or gated. Provide a valid --hf-token to scan it."
+                )
+            if r.status_code == 404 or r.status_code >= 400:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Model '{body.target}' not found on HuggingFace. Check the model ID and try again."
+                )
+        except _httpx.TimeoutException:
+            raise HTTPException(
+                status_code=503,
+                detail="Could not reach HuggingFace. Check your internet connection and try again."
+            )
+        except HTTPException:
+            raise  # re-raise our own 404s
+        except Exception:
+            pass  # if validation itself fails for unexpected reason, let the scan try anyway
 
     scan = Scan(
         user_id=user_id,
@@ -47,20 +77,19 @@ async def create_scan(
         target_type=body.target_type,
         status="pending",
         modules_status={
-            "serialization": "pending", "cve": "pending",
-            "config": "pending", "behavioral": "pending", "bias": "pending",
+            "serialization": "pending",
+            "cve": "pending",
+            "config": "pending",
+            "behavioral": "pending",
+            "bias": "pending",
         },
     )
     db.add(scan)
     await db.commit()
     await db.refresh(scan)
-
-    _scan_queue.enqueue(     
-        run_scan,
-        str(scan.id), body.target, body.target_type, body.hf_token,
-        job_timeout=600         
+    background_tasks.add_task(
+        run_scan, str(scan.id), body.target, body.target_type, body.hf_token
     )
-
     return {"scan_id": str(scan.id), "status": "pending", "created_at": scan.created_at}
 
 

@@ -63,7 +63,17 @@ export default function Dashboard() {
       }, 2500)
       setPollId(interval)
     } catch (e) {
-      setError(e.response?.data?.detail || 'Failed to start scan')
+      const msg = e.response?.data?.detail
+      const status = e.response?.status
+      if (status === 404) {
+        setError(msg || 'Model not found on HuggingFace. Check the model ID.')
+      } else if (status === 503) {
+        setError(msg || 'Could not reach HuggingFace. Check your connection.')
+      } else if (status === 429) {
+        setError('Too many scans. Wait a moment and try again.')
+      } else {
+        setError(msg || 'Failed to start scan.')
+      }
       setScanning(false)
     }
   }

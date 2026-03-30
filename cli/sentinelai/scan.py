@@ -68,6 +68,16 @@ def scan(target, hf_token, output_dir):
         headers=headers,
         timeout=30,
     )
+    if resp.status_code == 404:
+        try:
+            detail = resp.json().get("detail", "Model not found.")
+        except Exception:
+            detail = "Model not found on HuggingFace."
+        console.print(f"\n[red]✗ {detail}[/red]")
+        return
+    if resp.status_code == 503:
+        console.print(f"\n[yellow]✗ Could not reach HuggingFace. Check your connection.[/yellow]")
+        return
     if resp.status_code != 202:
         console.print(f"[red]✗ Failed to start scan: {resp.text}[/red]")
         return
