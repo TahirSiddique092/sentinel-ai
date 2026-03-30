@@ -3,11 +3,10 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sentinelai"
-version = "0.0.1"
+name = "sentinel-ai-scanner"
+version = "0.1.2"
 description = "AI model security scanner — scan any HuggingFace model for vulnerabilities, CVEs, misconfigurations, prompt injection, and bias."
 readme = "README.md"
-license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
     {name = "SentinelAI Team"},
@@ -18,7 +17,6 @@ classifiers = [
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
