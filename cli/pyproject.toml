@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sentinel-ai-scanner"
-version = "0.1.2"
+version = "0.1.3"
 description = "AI model security scanner — scan any HuggingFace model for vulnerabilities, CVEs, misconfigurations, prompt injection, and bias."
 readme = "README.md"
 requires-python = ">=3.10"
