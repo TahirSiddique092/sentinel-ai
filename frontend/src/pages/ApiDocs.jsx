@@ -357,7 +357,7 @@ export default function ApiDocs() {
           </a>
           <ul style={{ display: 'flex', gap: '1.5rem', listStyle: 'none', margin: 0, padding: 0 }}>
             <li><a href="/api-docs" className="footer-lnk" style={{ color: '#a855f7' }}>API Docs</a></li>
-            <li><a href="https://pypi.org/project/sentinelai" target="_blank" rel="noopener noreferrer" className="footer-lnk">PyPI</a></li>
+            <li><a href="https://pypi.org/project/sentinel-ai-scanner" target="_blank" rel="noopener noreferrer" className="footer-lnk">PyPI</a></li>
             <li><a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer" className="footer-lnk">GitHub</a></li>
             <li><a href="/developers" className="footer-lnk">Developers</a></li>
           </ul>
