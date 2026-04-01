@@ -35,7 +35,6 @@ class ScanCreate(BaseModel):
 async def create_scan(
     request: Request,
     body: ScanCreate,
-    background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -71,27 +70,29 @@ async def create_scan(
         except Exception:
             pass  # if validation itself fails for unexpected reason, let the scan try anyway
 
+    from app.scanner.service import run_scan   # import here to avoid circular at module level
+
     scan = Scan(
         user_id=user_id,
         target=body.target,
         target_type=body.target_type,
         status="pending",
         modules_status={
-            "serialization": "pending",
-            "cve": "pending",
-            "config": "pending",
-            "behavioral": "pending",
-            "bias": "pending",
+            "serialization": "pending", "cve": "pending",
+            "config": "pending", "behavioral": "pending", "bias": "pending",
         },
     )
     db.add(scan)
     await db.commit()
     await db.refresh(scan)
-    background_tasks.add_task(
-        run_scan, str(scan.id), body.target, body.target_type, body.hf_token
-    )
-    return {"scan_id": str(scan.id), "status": "pending", "created_at": scan.created_at}
 
+    _scan_queue.enqueue(     
+        run_scan,
+        str(scan.id), body.target, body.target_type, body.hf_token,
+        job_timeout=600         
+    )
+
+    return {"scan_id": str(scan.id), "status": "pending", "created_at": scan.created_at}
 
 @router.get("/{scan_id}")
 @limiter.limit("30/minute")
